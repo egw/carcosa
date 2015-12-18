@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+
+<!--
+
+    So ya, this is a goofy experiment with keeping the data in the web
+    page itself instead of a separate model. I dunno. It works, but it
+    feels really strange. Overall I don't think I like it.
+
+-->
+
+<html lang='en'>
+<head>
+    <meta charset='utf-8'></meta>
+    <title>Carcosa Initiative Tracker/Combat Aid</title>
+    <link href='https://fonts.googleapis.com/css?family=Open+Sans:400,300italic,700' rel='stylesheet' type='text/css'>
+    <style type='text/css'>
+        body, input { font-family: 'Open Sans', sans-serif; font-size: 8pt; /* width: 400px; */ }
+        h1 { font-weight: bolder; font-size: 1.2em; text-decoration: underline; }
+        h2 { font-size: 0.8em; font-style: italic; font-weight: lighter; }
+        h1,h2,h3,h4,h5 { display: inline; }
+        h3,h5 { font-size: 1.0em; }
+        h4 { font-variant: small-caps; text-decoration: underline; font-size: 1.1em; }
+
+        table#tracker { /* width: 800px; */ display: table; border-spacing: 5px; }
+        table#tracker th { border-bottom: solid black 2px; }
+
+        #characterTemplate { display: none; }
+
+        #tracker th.onInitiative { width: 2em; }
+        #tracker .name { width: 15em; }
+        #tracker .initiative{ width: 4em; }
+        #tracker .initiativeRoller { width: 3em; }
+        #tracker .initiativeResult { width: 3em; }
+        #tracker .hdMax { width: 3em; }
+        #tracker .hdCur { width: 3em; }
+        #tracker .hpRoller { width: 3em; }
+        #tracker .hdResult { width: 3em; }
+        #tracker .hpResult { width: 9em; }
+        #tracker .hpSum { width: 3em; }
+        #tracker .hpColumn { width: 12em; }
+        #tracker .damageAmount { width: 3em; }
+        #tracker .damageApply { width: 3em; }
+        #tracker .damageUndo { width: 3em; }
+        #tracker .svgButton { width: 3em; cursor: pointer; }
+
+        div#diceRoller, div#dcarcosa { margin-top: 20px; }
+
+    </style>
+    <script type='text/javascript'>
+var jsDice=function(){return{roll:function(a){a=a.replace(/- */,"+ -");a=a.replace(/D/,"d");a=a.split(/ *\+ */);for(var b=[],c=[],e=0;e<a.length;e++){var d=a[e].match(/^[ \t]*(-)?(\d+)?(?:(d)(\d+))?[ \t]*$/);if(d){var f=d[1]?-1:1,g=parseInt(d[2]||"1",10),h=parseInt(d[4]||"0",10);if(d[3])for(j=1;j<=g;j++)b[b.length]=f*Math.floor(h*crypto.getRandomValues(new Uint32Array(1))[0]/4294967295)+1,c[c.length]=h;else b[b.length]=f*g,c[c.length]=0}else return null}return 0==b.length?null:{res:b,type:c}},createElement:function(a){var b=
+document.createElement("div");b.id=a;b.innerHTML="\n            <input type='text' class='diceSpec' value='1d20'/>\n            <input type='button' value='Roll Dice' onclick='jsDice.rollDice(this.parentElement);'/>\n            <span class='diceResult'></span>";return b},createCSS:function(a){return"\n            #"+a+" input.diceSpec { width: 20em; }"},rollDice:function(a){var b=a.getElementsByClassName("diceSpec")[0].value,c=jsDice.roll(b);a.getElementsByClassName("diceResult")[0].innerHTML="Result ("+
+b+"): "+(1<c.res.length?c.res.join(" + ")+" = "+c.res.reduce(function(a,b){return a+b}):c.res[0])}}}();
+    </script>
+
+    <script type='text/javascript'>
+var dCarcosa=function(){var g=[20,12,10,8,6,4];return{roll:function(c){var b=[],k=c.getElementsByClassName("damageDice")[0].value;g.forEach(function(a){b.push(jsDice.roll(k+"d"+a).res)});var h=5-Math.floor((b[0][0]-1)/4),f=g.map(function(a){return 0}),a;a="<table>"+("<thead><tr><th></th>"+g.map(function(a){return"<th>d"+a+"</th>"}).join("")+"</tr></thead>");a+="<tbody>";for(var d=0;d<b[0].length;d++){a+="<tr><th>#"+(d+1)+"</th>";for(var e=0;e<b.length;e++)a=0==d&&0==e?a+("<td class='damageDiceType'>"+
+b[e][d]+"</td>"):e==h?a+("<td class='damageDiceColumn'>"+b[e][d]+"</td>"):a+("<td>"+b[e][d]+"</td>"),f[e]+=b[e][d];a+="</tr>"}a+="</tbody><tfoot><tr><th></th>";for(d=0;d<f.length;d++)a+=d==h?"<th class='damageDiceColumn'>"+f[d]+"</th>":"<th>"+f[d]+"</th>";a+="</tr></tfoot>";a+="</table>";c.getElementsByClassName("damageResult")[0].innerHTML=a},createElement:function(c){var b=document.createElement("div");b.id=c;b.innerHTML="\n            Roll <input type='number' class='damageDice' min='1' value='1'/>\n            <input type='button' value='dCarcosa' onclick='dCarcosa.roll(this.parentElement);'/>\n            <div class='damageResult'></div>";
+return b},createCSS:function(c){var b=document.createElement("style");b.type="text/css";b.innerHTML="\n            #"+c+" input.damageDice { width: 3em; }\n            #"+c+" table { display: table; border-spacing: 0px; }\n            #"+c+" table th, \n            #"+c+" table td { width: 40px; text-align: center; }\n            #"+c+" table thead th { border-bottom: solid black 1px; }\n            #"+c+" table tbody th { border-right: solid black 1px; }\n            #"+c+" table tfoot th { border-top: solid black 1px; }\n            #"+
+c+" table td.damageDiceType { background-color: aquamarine; }\n            #"+c+" table td.damageDiceColumn,\n            #"+c+" table th.damageDiceColumn { background-color: tomato; }";return b}}}();
+    </script>
+    <script>
+        function rollInitiative(el) {
+            el.parentElement.parentElement.getElementsByClassName("initiativeResult")[0].innerHTML = jsDice.roll(el.parentElement.parentElement.getElementsByClassName("initiative")[0].value).res.reduce(function(x, y) { return x+y; });
+        }
+
+        function rollAllInitiative() {
+            var rollers = characters.getElementsByClassName('initiativeRoller');
+            for (var i = 0; i < rollers.length; i++) {
+                rollers[i].click();
+            }
+        }
+
+        function sortByInitiative() {
+            var allCharacters = characters.getElementsByClassName('character');
+            var index = [];
+            for (var i = 0; i < allCharacters.length; i++) {
+                index.push([parseInt(allCharacters[i].getElementsByClassName('initiativeResult')[0].innerHTML), allCharacters[i]]);
+            }
+            var sorted = index.sort(function(a,b){return b[0]-a[0] || (Math.random() < 0.5 ? 1 : -1);}).map(function(x){return x[1];});
+            sorted[0].getElementsByClassName('onInitiative')[0].click();
+
+            characters.innerHTML = '';
+            sorted.forEach(function(x) {characters.appendChild(x);});
+        }
+
+        function rollHP(el) {
+            var hd = el.parentElement.parentElement.getElementsByClassName("hdCur")[0].value;
+            if (hd == 0) { return; }
+
+            var hdType = (Math.floor(Math.random() * 5) * 2) + 4;
+            var hpRolls = jsDice.roll(`${hd}d${hdType}`).res.sort(function(a,b){return b-a;});
+
+            el.parentElement.parentElement.getElementsByClassName("hdResult")[0].innerHTML = `d${hdType}`;
+            el.parentElement.parentElement.getElementsByClassName("hpResult")[0].innerHTML = hpRolls;
+            el.parentElement.parentElement.getElementsByClassName("hpSum")[0].innerHTML = hpRolls.reduce(function(a,b){return a+b;});
+        }
+
+        function rollAllHP() {
+            var rollers = characters.getElementsByClassName('hpRoller');
+            for (var i = 0; i < rollers.length; i++) {
+                rollers[i].click();
+            }
+        }
+
+        var charCount = 0;
+        var charNames = ['Alice', 'Bob', 'Carol', 'Dave', 'Erin', 'Frank', 'Gertrude', 'Henry', 'Iris', 'Jack', 'Karen', 'Larry', 'Margaret',
+                         'Nicholas', 'Ophelia', 'Paul', 'Quinn', 'Robert', 'Sandra', 'Thomas', 'Ursula', 'Victor', 'Wanda', 'Yosef', 'Zelda'];
+        function addCharacter(el) {
+            var clone = el.cloneNode('deep');
+            clone.getElementsByClassName('name')[0].value = charNames[0];
+            charNames.push(charNames.shift());
+            clone.id = 'character' + charCount;
+            clone.style.display = '';
+
+            charCount += 1;
+            characters.appendChild(clone);
+        }
+
+        // apply damage to highest number die first (p7 of the carcosa pdf)
+        function applyDamage(el) {
+            var damage = el.parentElement.parentElement.getElementsByClassName('damageAmount')[0].value || 0;
+            var hpDice = el.parentElement.parentElement.getElementsByClassName('hpResult')[0].innerHTML;
+
+            // save old dice array for undo
+            el.parentElement.parentElement.getElementsByClassName('undoStack')[0].value = hpDice;
+            hpDice = hpDice.split(/,\s*/).map(function(x) {return parseInt(x)});
+
+            for (var i = 0; i < hpDice.length; i++) {
+                if (hpDice[i] >= damage) { hpDice[i] -= damage; damage = 0; break; }
+                else { damage -= hpDice[i]; hpDice[i] = 0; }
+            }
+            hpDice = hpDice.filter(function(x) {return x > 0;}).sort(function(a,b) {return b-a;});
+            el.parentElement.parentElement.getElementsByClassName('hdCur')[0].value = hpDice.length;
+            el.parentElement.parentElement.getElementsByClassName("hpResult")[0].innerHTML = hpDice;
+            el.parentElement.parentElement.getElementsByClassName("hpSum")[0].innerHTML = hpDice.length ? hpDice.reduce(function(a,b){return a+b;}) : 0;
+            el.parentElement.parentElement.getElementsByClassName('damageAmount')[0].value = 0;
+        }
+
+        function undoDamage(el) {
+            var hpDice = el.parentElement.parentElement.getElementsByClassName('undoStack')[0].value;
+
+            if (hpDice) {
+                hpDice = hpDice.split(/,\s*/).map(function(x) {return parseInt(x)});
+                el.parentElement.parentElement.getElementsByClassName('hdCur')[0].value = hpDice.length;
+                el.parentElement.parentElement.getElementsByClassName('hpResult')[0].innerHTML = hpDice;
+                el.parentElement.parentElement.getElementsByClassName("hpSum")[0].innerHTML = hpDice.reduce(function(a,b){return a+b;});
+            }
+        }
+
+        // remove the table row from the table.
+        function deleteCharacter(el) {
+            el.parentElement.parentElement.parentElement.removeChild(el.parentElement.parentElement);
+        }
+
+    </script>
+
+    <script>
+        function init() {
+            document.head.appendChild(dCarcosa.createCSS('diceRoller'));
+            document.body.appendChild(jsDice.createElement('diceRoller'));
+            document.head.appendChild(dCarcosa.createCSS('dcarcosa'));
+            document.body.appendChild(dCarcosa.createElement('dcarcosa'));
+        }
+    </script>
+</head>
+<body onload='init();'>
+
+<h1>Carcosa Initiative Tracker and Dice Rollers</h1>
+
+<p>
+    <input type='button' name='add' value='Add Character' onclick='addCharacter(characterTemplate);'/>
+    <input type='button' name='add' value='Roll Initiatives' onclick='rollAllInitiative();'/>
+    <input type='button' name='add' value='Sort Initiatives' onclick='sortByInitiative();'/>
+    <input type='button' name='add' value='Roll Hit Points' onclick='rollAllHP();'/>
+    <input type='button' name='add' value='Roll and Sort Initiative; Roll Hit Points' onclick='rollAllInitiative(); sortByInitiative(); rollAllHP();'/>
+</p>
+
+<table id='tracker'>
+    <thead><tr><th class='onInitiative'></th><th class='name'>Name</th><th class='initiative'>Init</th><th class='initiativeRoller'>(roll)</th><th class='initiativeResult'>(result)</th><th class='hdMax'>HD</th><th class='hdCur'>(cur)</th><th class='hpRoller'>(roll)</th><th class='hpColumn' colspan='3'>(hit points)</th><th colspan='3'>Damage</th><th>(del)</th></tr></thead>
+    <tbody id='hiddenTemplate'>
+<tr id='characterTemplate' class='character'>
+    <td><input type='radio' class='onInitiative' name='onInitiative'/></td>
+    <td><input type='text' class='name'/></td>
+    <td><input type='text' class='initiative' value='1d6'/></td>
+    <td><span class='svgButton initiativeRoller' title='roll initiative' onclick='rollInitiative(this);'/><svg fill="#000000" height="1.5em" viewBox="0 0 24 24" width="1.5em" xmlns="http://www.w3.org/2000/svg"><path d="M0 0h24v24H0z" fill="none"/><path d="M10.59 9.17L5.41 4 4 5.41l5.17 5.17 1.42-1.41zM14.5 4l2.04 2.04L4 18.59 5.41 20 17.96 7.46 20 9.5V4h-5.5zm.33 9.41l-1.41 1.41 3.13 3.13L14.5 20H20v-5.5l-2.04 2.04-3.13-3.13z"/></svg></td>
+    <td><span class='initiativeResult'/></td>
+    <td><input type='number' class='hdMax' min='1' value='4'/></td>
+    <td><input type='number' class='hdCur' min='1' value='4'/></td>
+    <td><span class='svgButton hpRoller' title='roll hit points' onclick='rollHP(this);'><svg fill="#000000" height="1.5em" viewBox="0 0 24 24" width="1.5em" xmlns="http://www.w3.org/2000/svg"><path d="M0 0h24v24H0z" fill="none"/><path d="M10.59 9.17L5.41 4 4 5.41l5.17 5.17 1.42-1.41zM14.5 4l2.04 2.04L4 18.59 5.41 20 17.96 7.46 20 9.5V4h-5.5zm.33 9.41l-1.41 1.41 3.13 3.13L14.5 20H20v-5.5l-2.04 2.04-3.13-3.13z"/></svg></span></td>
+    <td><span class='hdResult'/></td>
+    <td><span class='hpResult'/></td>
+    <td><span class='hpSum'/></td>
+    <td><input type='number' class='damageAmount' min='0' value='0'/></td>
+    <td><span class='svgButton damageApply' title='apply damage' onclick='applyDamage(this);'><svg fill="#000000" height="1.5em" viewBox="0 0 24 24" width="1.5em" xmlns="http://www.w3.org/2000/svg"><path d="M0 0h24v24H0z" fill="none"/><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg></span></td>
+    <td><span class='svgButton damageUndo' title='undo damage' onclick='undoDamage(this);'/><input type='hidden' class='undoStack'/><svg fill="#000000" height="1.5em" viewBox="0 0 24 24" width="1.5em" xmlns="http://www.w3.org/2000/svg"><path d="M0 0h24v24H0z" fill="none"/><path d="M12.5 8c-2.65 0-5.05.99-6.9 2.6L2 7v9h9l-3.62-3.62c1.39-1.16 3.16-1.88 5.12-1.88 3.54 0 6.55 2.31 7.6 5.5l2.37-.78C21.08 11.03 17.15 8 12.5 8z"/></svg></td>
+    <td><span class='svgButton' title='delete character' onclick='deleteCharacter(this);'><svg fill="#000000" height="1.5em" viewBox="0 0 24 24" width="1.5em" xmlns="http://www.w3.org/2000/svg"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/><path d="M0 0h24v24H0z" fill="none"/></svg></span>
+    </td>
+</tr>
+    </tbody>
+    <tbody id='characters'></tbody>
+</table>
+
+</body>
+</html>
+
